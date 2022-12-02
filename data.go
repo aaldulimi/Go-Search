@@ -1,56 +1,84 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/gocolly/colly"
 )
 
-type article struct {
-	title   string
-	summary string
-	body    string
-	url     string
+type Article struct {
+	Title   string `json:"title"`
+	Summary string `json:"summary"`
+	Body    string `json:"body"`
+	URL     string `json:"url"`
 }
 
 func main() {
-	getMonthsFromYear(2021)
+	file, err := os.Create("data.json")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
 
+	file.Write([]byte("["))
+	getMonthsFromYear(file, 2021)
+	file.Write([]byte("]"))
 }
 
-func getMonthsFromYear(year int) {
+func getMonthsFromYear(file *os.File, year int) {
 	yearStr := fmt.Sprintf("%d", year)
 	url := "https://www.nytimes.com/sitemap/" + yearStr + "/"
 
 	c := colly.NewCollector()
+	monthLimit, monthCount := 1, 0
 	c.OnHTML("ol > li", func(e *colly.HTMLElement) {
 		link := e.ChildAttr("a", "href")
 		fullLink := url + link
 
-		getDaysFromMonth(fullLink)
+		if monthCount < monthLimit {
+			fmt.Println(fullLink)
+			getDaysFromMonth(file, fullLink)
+
+		}
+
+		monthCount++
 	})
 
 	c.Visit(url)
 }
 
-func getDaysFromMonth(url string) {
+func getDaysFromMonth(file *os.File, url string) {
 	c := colly.NewCollector()
 	c.OnHTML("ol > li", func(e *colly.HTMLElement) {
 		link := e.ChildAttr("a", "href")
 		fullLink := url + link
 
-		getArticlesFromDay(fullLink)
+		getArticlesFromDay(file, fullLink)
 	})
 
 	c.Visit(url)
 }
 
-func getArticlesFromDay(url string) {
+func getArticlesFromDay(file *os.File, url string) {
 	c := colly.NewCollector()
 	c.OnHTML("#site-content > div > ul:nth-child(4) > li", func(e *colly.HTMLElement) {
 		link := e.ChildAttr("a", "href")
 		article := getArticleContent(link)
+
 		// add article to file
+		articleJSON, err := json.Marshal(article)
+		if err != nil {
+			panic(err)
+		}
+
+		var indentedJSON bytes.Buffer
+		json.Indent(&indentedJSON, articleJSON, "", "\t")
+
+		file.Write(indentedJSON.Bytes())
+		file.Write([]byte(","))
 
 	})
 
@@ -58,21 +86,21 @@ func getArticlesFromDay(url string) {
 
 }
 
-func getArticleContent(url string) article {
-	article := article{url: url}
+func getArticleContent(url string) Article {
+	article := Article{URL: url}
 	c := colly.NewCollector()
 	c.OnHTML("#story > header > div:nth-child(3) > h1", func(e *colly.HTMLElement) {
 		title := e.Text
-		article.title = title
+		article.Title = title
 	})
 
 	c.OnHTML("#article-summary", func(e *colly.HTMLElement) {
 		summary := e.Text
-		article.summary = summary
+		article.Summary = summary
 	})
 
 	c.OnHTML("#story > section > div > div > p", func(e *colly.HTMLElement) {
-		article.body += e.Text
+		article.Body += e.Text
 
 	})
 	c.Visit(url)
