@@ -16,15 +16,15 @@ type Article struct {
 	URL     string `json:"url"`
 }
 
-func main() {
-	file, err := os.Create("data.json")
+func ScrapeNYTimes(year int, filename string) {
+	file, err := os.Create(filename)
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
 
 	file.Write([]byte("["))
-	getMonthsFromYear(file, 2021)
+	getMonthsFromYear(file, year)
 	file.Write([]byte("]"))
 }
 
@@ -43,7 +43,6 @@ func getMonthsFromYear(file *os.File, year int) {
 			getDaysFromMonth(file, fullLink)
 
 		}
-
 		monthCount++
 	})
 
