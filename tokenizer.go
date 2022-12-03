@@ -1,55 +1,31 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/kljensen/snowball"
 )
 
-func main() {
-	testString := "this is A STRING, THAT CONTAINS. SOME Words, running."
-
-	fmt.Println("Split text:")
-	splitText := SplitText(testString)
-	for _, value := range splitText {
-		fmt.Print(value, " ")
-	}
-
-	fmt.Println("\nConvert to lowercase:")
-	lowerCase := ConvertToLowercase(splitText)
-	for _, value := range lowerCase {
-		fmt.Print(value, " ")
-	}
-
-	fmt.Println("\nRemove punctuation:")
-	noPunc := RemovePunctuation(lowerCase)
-	for _, value := range noPunc {
-		fmt.Print(value, " ")
-	}
-
-	fmt.Println("\nRemove stop words:")
+func Tokenize(text string) []string {
+	splitText := splitText(text)
+	lowerCase := convertToLowercase(splitText)
+	noPunc := removePunctuation(lowerCase)
 	noStopWords := removeStopWords(noPunc)
-	for _, value := range noStopWords {
-		fmt.Print(value, " ")
-	}
+	onlyStem := keepStem(noStopWords)
 
-	fmt.Println("\nKeep only stem words:")
-	onlyStem := KeepStem(noStopWords)
-	for _, value := range onlyStem {
-		fmt.Print(value, " ")
-	}
+	return onlyStem
+
 }
 
 // split a string to a slice of tokens
-func SplitText(text string) []string {
+func splitText(text string) []string {
 	splitText := strings.Split(text, " ")
 	return splitText
 }
 
 // convert all strings in a slice to lowercase
-func ConvertToLowercase(tokens []string) []string {
+func convertToLowercase(tokens []string) []string {
 	for i, token := range tokens {
 		tokens[i] = strings.ToLower(token)
 	}
@@ -58,8 +34,8 @@ func ConvertToLowercase(tokens []string) []string {
 }
 
 // remove punctuation, keep only letters, numbers and underscores
-func RemovePunctuation(tokens []string) []string {
-	r, err := regexp.Compile("[^\\w\\s]")
+func removePunctuation(tokens []string) []string {
+	r, err := regexp.Compile(`[^\\w\\s]`)
 	if err != nil {
 		panic(err)
 	}
@@ -94,7 +70,7 @@ func removeStopWords(tokens []string) []string {
 	return newSlice
 }
 
-func KeepStem(tokens []string) []string {
+func keepStem(tokens []string) []string {
 	var stemWords []string
 	for _, token := range tokens {
 		stemmed, err := snowball.Stem(token, "english", true)
@@ -102,7 +78,6 @@ func KeepStem(tokens []string) []string {
 		if err == nil {
 			stemWords = append(stemWords, stemmed)
 		}
-
 	}
 
 	return stemWords
