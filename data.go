@@ -9,8 +9,11 @@ import (
 	"github.com/gocolly/colly"
 )
 
+var docID int = 0
+
 type Article struct {
 	Title   string `json:"title"`
+	Id      int    `json:"id"`
 	Summary string `json:"summary"`
 	Body    string `json:"body"`
 	URL     string `json:"url"`
@@ -103,6 +106,9 @@ func getArticleContent(url string) Article {
 
 	})
 	c.Visit(url)
+
+	article.Id = docID
+	docID++
 
 	return article
 

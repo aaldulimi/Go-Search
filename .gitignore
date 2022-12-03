@@ -16,7 +16,7 @@
 
 
 # the data file 
-data.json
+*.json
 
 # the excutable 
 Go-Search

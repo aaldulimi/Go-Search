@@ -35,7 +35,7 @@ func convertToLowercase(tokens []string) []string {
 
 // remove punctuation, keep only letters, numbers and underscores
 func removePunctuation(tokens []string) []string {
-	r, err := regexp.Compile(`[^\\w\\s]`)
+	r, err := regexp.Compile("[^\\w\\s]")
 	if err != nil {
 		panic(err)
 	}
