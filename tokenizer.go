@@ -13,8 +13,9 @@ func Tokenize(text string) []string {
 	noPunc := removePunctuation(lowerCase)
 	noStopWords := removeStopWords(noPunc)
 	onlyStem := keepStem(noStopWords)
+	uniqueTokens := uniqueSlice(onlyStem)
 
-	return onlyStem
+	return uniqueTokens
 
 }
 
@@ -81,4 +82,18 @@ func keepStem(tokens []string) []string {
 	}
 
 	return stemWords
+}
+
+func uniqueSlice(tokens []string) []string {
+	tokenHash := make(map[string]bool)
+	var newSlice []string
+
+	for _, token := range tokens {
+		if _, ok := tokenHash[token]; !ok {
+			tokenHash[token] = true
+			newSlice = append(newSlice, token)
+		}
+	}
+
+	return newSlice
 }

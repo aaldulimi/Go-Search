@@ -8,30 +8,35 @@ import (
 )
 
 func main() {
+	filename := "nytimes.json"
 	// build the dataset
-	// ScrapeNYTimes(2022, "nytimes.json")
+	// ScrapeNYTimes(2022, filename)
 
 	// build index, will be stored in memory, will later store in rocksdb
-	index := buildIndex("nytimes.json")
+	index := buildIndex(filename)
 
-	searchQuery := "Donald"
+	searchQuery := "Blackberry"
+	searchLimit := 10
 	searchTokens := Tokenize(searchQuery)
 
 	// use hashmap to store list of ids rather than slice, prevents iterating over array
 	searchDocs := make(map[int]int)
 
-	if len(searchTokens) == 1 {
-		token := searchTokens[0]
+	for _, token := range searchTokens {
 		docsSlice := index[token]
 
 		for _, docId := range docsSlice {
-			searchDocs[docId] = 1
+			if _, ok := searchDocs[docID]; ok {
+				searchDocs[docId]++
+			} else {
+				searchDocs[docId] = 1
+			}
 		}
+	}
 
-		results := docSearcher("nytimes.json", searchDocs)
-		for _, article := range results {
-			fmt.Println(article.Title)
-		}
+	results := docSearcher(filename, searchDocs, len(searchTokens), searchLimit)
+	for _, article := range results {
+		fmt.Println(article.Title)
 	}
 
 }
@@ -66,19 +71,41 @@ func buildIndex(filename string) map[string][]int {
 	return index
 }
 
-func docSearcher(filename string, docsId map[int]int) []Article {
+func docSearcher(filename string, searchDocs map[int]int, rank int, limit int) []Article {
 	var articles []Article
 	var returnArticles []Article
+	currentRank := rank
 
 	dataFile, _ := os.Open(filename)
 	byteValue, _ := ioutil.ReadAll(dataFile)
 	json.Unmarshal(byteValue, &articles)
 
-	for _, article := range articles {
-		if _, ok := docsId[article.Id]; ok {
-			returnArticles = append(returnArticles, article)
+	for len(returnArticles) < limit {
+		docIterator(articles, searchDocs, &returnArticles, currentRank, limit)
+		currentRank--
+
+		if currentRank == 0 {
+			break
 		}
 	}
 
 	return returnArticles
+
+}
+
+func docIterator(articles []Article, searchDocs map[int]int, returnArticles *[]Article, currentRank int, limit int) {
+	articleCount := 0
+
+	for _, article := range articles {
+		if val, ok := searchDocs[article.Id]; ok && val == currentRank {
+			if article.Title != "" {
+				*returnArticles = append(*returnArticles, article)
+				articleCount++
+			}
+		}
+
+		if articleCount == limit {
+			break
+		}
+	}
 }
