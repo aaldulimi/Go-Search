@@ -1,7 +1,10 @@
 package main
 
 func main() {
+	// COMMENT THIS IF YOU ARE NOT USING THE API
 	API()
+
+	// UNCOMMENT THE BELOW CODE IF YOU DON'T WANT TO USE THE API
 	// query := "Blackberry ends phone support"
 	// filename := "nytimes.json"
 
