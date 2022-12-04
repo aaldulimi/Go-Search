@@ -8,6 +8,10 @@ import (
 )
 
 func main() {
+	searchQuery := "Blackberry phones end of life"
+	searchLimit := 5
+	searchTokens := Tokenize(searchQuery)
+
 	filename := "nytimes.json"
 	// build the dataset
 	// ScrapeNYTimes(2022, filename)
@@ -15,29 +19,12 @@ func main() {
 	// build index, will be stored in memory, will later store in rocksdb
 	index := buildIndex(filename)
 
-	searchQuery := "Blackberry"
-	searchLimit := 10
-	searchTokens := Tokenize(searchQuery)
-
-	// use hashmap to store list of ids rather than slice, prevents iterating over array
-	searchDocs := make(map[int]int)
-
-	for _, token := range searchTokens {
-		docsSlice := index[token]
-
-		for _, docId := range docsSlice {
-			if _, ok := searchDocs[docID]; ok {
-				searchDocs[docId]++
-			} else {
-				searchDocs[docId] = 1
-			}
-		}
-	}
-
+	// hashmap to store all doc ids where token exists, for each token
+	searchDocs := buildDocsMap(searchTokens, index)
+	// list of Articles that matched the search query
 	results := docSearcher(filename, searchDocs, len(searchTokens), searchLimit)
-	for _, article := range results {
-		fmt.Println(article.Title)
-	}
+
+	printResults(results, true, false, false, false)
 
 }
 
@@ -69,6 +56,24 @@ func buildIndex(filename string) map[string][]int {
 	}
 
 	return index
+}
+
+func buildDocsMap(searchTokens []string, index map[string][]int) map[int]int {
+	searchDocs := make(map[int]int)
+
+	for _, token := range searchTokens {
+		docsSlice := index[token]
+
+		for _, docId := range docsSlice {
+			if _, ok := searchDocs[docID]; ok {
+				searchDocs[docId]++
+			} else {
+				searchDocs[docId] = 1
+			}
+		}
+	}
+
+	return searchDocs
 }
 
 func docSearcher(filename string, searchDocs map[int]int, rank int, limit int) []Article {
@@ -107,5 +112,26 @@ func docIterator(articles []Article, searchDocs map[int]int, returnArticles *[]A
 		if articleCount == limit {
 			break
 		}
+	}
+}
+
+func printResults(results []Article, title bool, summary bool, body bool, url bool) {
+	for _, article := range results {
+		if title {
+			fmt.Println(article.Title)
+		}
+
+		if summary {
+			fmt.Println(article.Summary)
+		}
+
+		if body {
+			fmt.Println(article.Body)
+		}
+
+		if url {
+			fmt.Println(article.URL)
+		}
+
 	}
 }
