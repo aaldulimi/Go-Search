@@ -14,9 +14,7 @@ func Search(searchQuery string, searchLimit int, index map[string][]int, filenam
 	// list of Articles that matched the search query
 	results := docSearcher(filename, searchDocs, len(searchTokens), searchLimit)
 
-	// printResults(results, true, false, false, false)
 	return results
-
 }
 
 func buildDocsMap(searchTokens []string, index map[string][]int) map[int]int {
@@ -56,7 +54,6 @@ func docSearcher(filename string, searchDocs map[int]int, rank int, limit int) [
 	}
 
 	return returnArticles
-
 }
 
 func docIterator(articles []Article, searchDocs map[int]int, returnArticles *[]Article, currentRank int, limit int) {
